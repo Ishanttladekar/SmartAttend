@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   Radio,
-  Users,
   CheckCircle2,
   Clock,
   MapPin,
   Square,
-  ShieldCheck,
   RefreshCw,
   ArrowLeft,
   Camera,
@@ -15,10 +13,10 @@ import {
 } from 'lucide-react';
 import { api } from '../../api/client.js';
 import { useSocket } from '../../context/SocketContext.js';
+import { LocationMap } from '../../components/common/LocationMap.js';
 
 export const LiveSessionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { socket, joinSessionRoom, leaveSessionRoom } = useSocket();
 
   const [sessionData, setSessionData] = useState<any>(null);
@@ -40,7 +38,6 @@ export const LiveSessionPage: React.FC = () => {
     };
   }, [id]);
 
-  // Real-time listener for marked attendance
   useEffect(() => {
     if (!socket) return;
 
@@ -48,7 +45,6 @@ export const LiveSessionPage: React.FC = () => {
       setSessionData((prev: any) => {
         if (!prev) return prev;
 
-        // Check if student already in present list to prevent duplicate additions
         const alreadyPresent = prev.presentStudents.some(
           (s: any) => s.studentId === newRecord.studentId
         );
@@ -82,7 +78,6 @@ export const LiveSessionPage: React.FC = () => {
     };
   }, [socket]);
 
-  // Live duration timer
   useEffect(() => {
     if (!sessionData?.session?.startTime) return;
 
@@ -117,7 +112,7 @@ export const LiveSessionPage: React.FC = () => {
   const handleStopSession = async () => {
     if (!id) return;
     const confirmStop = window.confirm(
-      'Are you sure you want to stop this attendance session? Students will no longer be able to submit attendance.'
+      'Are you sure you want to stop this session? Students will no longer be able to submit attendance.'
     );
     if (!confirmStop) return;
 
@@ -136,7 +131,7 @@ export const LiveSessionPage: React.FC = () => {
     return (
       <div className="py-24 text-center text-slate-400">
         <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-2" />
-        <p className="text-xs">Connecting to live attendance stream...</p>
+        <p className="text-xs">Connecting to live attendance session...</p>
       </div>
     );
   }
@@ -156,234 +151,200 @@ export const LiveSessionPage: React.FC = () => {
   const isActive = session.status === 'ACTIVE';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Back button */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div>
         <Link
           to={`/teacher/classroom/${classroom.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to {classroom.subjectName}</span>
         </Link>
       </div>
 
-      {/* ACTIVE ATTENDANCE LIVE BANNER */}
-      <div
-        className={`p-6 sm:p-8 rounded-3xl border ${
-          isActive
-            ? 'bg-gradient-to-r from-emerald-900 via-slate-900 to-teal-950 text-white border-emerald-500/30 shadow-xl shadow-emerald-950/20'
-            : 'bg-white text-slate-900 border-slate-200 shadow-sm'
-        }`}
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
-              <span
-                className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
-                  isActive
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-slate-100 text-slate-600 border border-slate-200'
-                }`}
-              >
-                {isActive && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                )}
-                {isActive ? 'ACTIVE ATTENDANCE SESSION' : 'SESSION COMPLETED'}
-              </span>
-              <span
-                className={`text-xs font-mono ${
-                  isActive ? 'text-slate-400' : 'text-slate-500'
-                }`}
-              >
-                {session.code}
-              </span>
-            </div>
+      {/* Session Header Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                isActive
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {isActive ? 'SESSION ACTIVE' : 'COMPLETED'}
+            </span>
+            <span className="text-xs font-mono text-slate-500">{session.code}</span>
+          </div>
 
+          <h1 className="text-2xl font-bold text-slate-900">
+            {classroom.subjectName} ({classroom.subjectCode})
+          </h1>
+          <p className="text-xs text-slate-500">
+            Section {classroom.section} • Started at {new Date(session.startTime).toLocaleTimeString()}
+          </p>
+
+          <div className="flex items-center gap-4 text-xs text-slate-600 pt-1">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              Duration: <strong className="font-mono text-slate-900">{durationTimer}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+              Radius: <strong>{session.allowedRadiusMeters || 25} meters</strong>
+            </span>
+          </div>
+        </div>
+
+        <div>
+          {isActive ? (
+            <button
+              onClick={handleStopSession}
+              disabled={stopping}
+              className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-2"
+            >
+              <Square className="w-3.5 h-3.5 fill-current" />
+              <span>{stopping ? 'Stopping...' : 'Stop Attendance Session'}</span>
+            </button>
+          ) : (
+            <div className="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl">
+              Session Closed
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Live Counter Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 text-center">
+          <p className="text-xs font-semibold text-slate-400 uppercase">Present</p>
+          <h2 className="text-3xl font-extrabold text-emerald-600 mt-1">{stats.presentCount}</h2>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 text-center">
+          <p className="text-xs font-semibold text-slate-400 uppercase">Absent / Pending</p>
+          <h2 className="text-3xl font-extrabold text-rose-500 mt-1">{stats.absentCount}</h2>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 text-center">
+          <p className="text-xs font-semibold text-slate-400 uppercase">Total Enrolled</p>
+          <h2 className="text-3xl font-extrabold text-slate-900 mt-1">{stats.totalEnrolled}</h2>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 text-center">
+          <p className="text-xs font-semibold text-slate-400 uppercase">Attendance Rate</p>
+          <h2 className="text-3xl font-extrabold text-blue-600 mt-1">{stats.attendancePercentage}%</h2>
+        </div>
+      </div>
+
+      {/* Interactive Map & Feed Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Geofence Map */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-blue-600" />
+              <span>Geofence Location Map</span>
+            </h3>
+            <span className="text-[11px] text-slate-400 font-mono">
+              {session.allowedRadiusMeters || 25}m radius
+            </span>
+          </div>
+
+          <LocationMap
+            centerLat={session.authorizedLocation.latitude}
+            centerLng={session.authorizedLocation.longitude}
+            radiusMeters={session.allowedRadiusMeters || 25}
+            className="h-72 w-full rounded-xl"
+            centerLabel="Classroom Session"
+          />
+
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Blue perimeter shows the active 25-meter radius. Students outside this circle are automatically blocked from checking in.
+          </p>
+        </div>
+
+        {/* Right: Live Checked-in Students Table */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                {classroom.subjectName} ({classroom.subjectCode})
-              </h1>
-              <p
-                className={`text-xs mt-1 ${
-                  isActive ? 'text-slate-300' : 'text-slate-500'
-                }`}
-              >
-                Section {classroom.section} • Started at{' '}
-                {new Date(session.startTime).toLocaleTimeString()}
+              <h3 className="font-bold text-slate-900 text-sm">
+                Live Attendance Feed
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Updates in real-time as students verify location and biometric checks
               </p>
             </div>
+            <span className="text-xs font-mono font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+              {stats.presentCount} / {stats.totalEnrolled}
+            </span>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <Clock className="w-4 h-4 text-amber-400" />
-                Duration: <strong className="font-mono text-white">{durationTimer}</strong>
-              </span>
-
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <MapPin className="w-4 h-4 text-blue-400" />
-                Geofence: <strong>{session.allowedRadiusMeters || 25} meters</strong>
-              </span>
+          {presentStudents.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 space-y-1">
+              <Radio className="w-6 h-6 mx-auto text-slate-300 animate-pulse" />
+              <p className="text-xs font-medium">Waiting for student check-ins...</p>
             </div>
-          </div>
-
-          {/* Action Button: Stop Session */}
-          <div>
-            {isActive ? (
-              <button
-                onClick={handleStopSession}
-                disabled={stopping}
-                className="w-full sm:w-auto px-6 py-3.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-rose-600/30 transition flex items-center justify-center gap-2"
-              >
-                <Square className="w-4 h-4 fill-current" />
-                <span>{stopping ? 'Stopping...' : 'Stop Attendance Session'}</span>
-              </button>
-            ) : (
-              <div className="px-5 py-2.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl border border-slate-200">
-                Session Finished
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* LIVE STATS COUNTER GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm text-center space-y-1">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Present
-          </p>
-          <h2 className="text-4xl font-black text-emerald-600">
-            {stats.presentCount}
-          </h2>
-          <p className="text-[11px] text-slate-500">Live verified check-ins</p>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm text-center space-y-1">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Absent / Not Marked
-          </p>
-          <h2 className="text-4xl font-black text-rose-500">
-            {stats.absentCount}
-          </h2>
-          <p className="text-[11px] text-slate-500">Pending submissions</p>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm text-center space-y-1">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Total Enrolled
-          </p>
-          <h2 className="text-4xl font-black text-slate-900">
-            {stats.totalEnrolled}
-          </h2>
-          <p className="text-[11px] text-slate-500">Classroom roster</p>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm text-center space-y-1">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Attendance Rate
-          </p>
-          <h2 className="text-4xl font-black text-blue-600">
-            {stats.attendancePercentage}%
-          </h2>
-          <p className="text-[11px] text-slate-500">Session turnout</p>
-        </div>
-      </div>
-
-      {/* LIVE FEED: MARKED STUDENTS LIST */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <span>Live Attendance Log</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            </h3>
-            <p className="text-xs text-slate-500">
-              Students appearing in real-time as physical location and biometric checks pass
-            </p>
-          </div>
-
-          <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl">
-            Count: {stats.presentCount} / {stats.totalEnrolled}
-          </span>
-        </div>
-
-        {presentStudents.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 space-y-2">
-            <Radio className="w-8 h-8 mx-auto text-slate-300 animate-pulse" />
-            <p className="text-xs font-medium">Awaiting student submissions...</p>
-            <p className="text-[11px] text-slate-400">
-              Students near the classroom can mark attendance using the SmartAttend mobile portal.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 uppercase tracking-wider font-bold">
-                  <th className="py-3 px-4">Student</th>
-                  <th className="py-3 px-4">Roll Number</th>
-                  <th className="py-3 px-4">Distance (Geofence)</th>
-                  <th className="py-3 px-4">Anti-Proxy Verifications</th>
-                  <th className="py-3 px-4">Time Recorded</th>
-                  <th className="py-3 px-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {presentStudents.map((record: any) => (
-                  <tr key={record.recordId || record.studentId} className="hover:bg-slate-50 transition">
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900">{record.name}</div>
-                      <div className="text-[11px] text-slate-400">{record.email}</div>
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-slate-800">
-                      {record.rollNumber}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-slate-700">
-                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono">
-                        <MapPin className="w-3 h-3 text-emerald-600" />
-                        {record.distanceMeters}m away
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold text-[10px] border border-blue-200">
-                          <MapPin className="w-2.5 h-2.5" />
-                          GPS (25m)
-                        </span>
-
-                        {record.verificationMethods?.faceVerified && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[10px] border border-indigo-200">
-                            <Camera className="w-2.5 h-2.5" />
-                            Face Vector
-                          </span>
-                        )}
-
-                        {record.verificationMethods?.passkeyVerified && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold text-[10px] border border-purple-200">
-                            <Fingerprint className="w-2.5 h-2.5" />
-                            Passkey
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-slate-500">
-                      {new Date(record.timestamp).toLocaleTimeString()}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>Present ✓</span>
-                      </span>
-                    </td>
+          ) : (
+            <div className="overflow-x-auto max-h-80 overflow-y-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 uppercase tracking-wider font-semibold">
+                    <th className="py-2.5 px-3">Student</th>
+                    <th className="py-2.5 px-3">Roll No</th>
+                    <th className="py-2.5 px-3">Distance</th>
+                    <th className="py-2.5 px-3">Verification</th>
+                    <th className="py-2.5 px-3">Time</th>
+                    <th className="py-2.5 px-3">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {presentStudents.map((record: any) => (
+                    <tr key={record.recordId || record.studentId} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-3 font-semibold text-slate-900">
+                        {record.name}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-700">
+                        {record.rollNumber}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600">
+                        {record.distanceMeters}m
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium text-[10px]">
+                            GPS
+                          </span>
+                          {record.verificationMethods?.faceVerified && (
+                            <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium text-[10px]">
+                              Face
+                            </span>
+                          )}
+                          {record.verificationMethods?.passkeyVerified && (
+                            <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-medium text-[10px]">
+                              Passkey
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-400">
+                        {new Date(record.timestamp).toLocaleTimeString()}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold text-[11px]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Present</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
-

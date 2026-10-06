@@ -174,9 +174,9 @@ npm run seed
 | Role | Email | Password | Additional Details |
 | :--- | :--- | :--- | :--- |
 | **Teacher** | `teacher@smartattend.edu` | `password123` | Dr. Alan Turing (CS Dept, FAC-CS-042) |
-| **Student 1** | `rahul@student.edu` | `password123` | Rahul Sharma (CS-2023-01, Face Enrolled) |
-| **Student 2** | `priya@student.edu` | `password123` | Priya Patel (CS-2023-02) |
-| **Student 3** | `aman@student.edu` | `password123` | Aman Verma (CS-2023-03) |
+| **Student 1** | `rahul@student.edu` | `password123` | Rahul  (CS-2023-01, Face Enrolled) |
+| **Student 2** | `priya@student.edu` | `password123` | Priya  (CS-2023-02) |
+| **Student 3** | `aman@student.edu` | `password123` | Aman  (CS-2023-03) |
 
 ---
 

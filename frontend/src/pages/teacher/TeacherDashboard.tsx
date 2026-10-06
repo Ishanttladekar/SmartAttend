@@ -10,15 +10,14 @@ import {
   Copy,
   Check,
   Radio,
-  FileText,
   MapPin,
   RefreshCw,
-  AlertCircle,
 } from 'lucide-react';
 import { api } from '../../api/client.js';
 import { StatCard } from '../../components/common/StatCard.js';
 import { Modal } from '../../components/common/Modal.js';
 import { QRCodeModal } from '../../components/common/QRCodeModal.js';
+import { LocationMap } from '../../components/common/LocationMap.js';
 import { Classroom } from '../../types/index.js';
 
 export const TeacherDashboard: React.FC = () => {
@@ -26,7 +25,6 @@ export const TeacherDashboard: React.FC = () => {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Modals state
   const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
@@ -68,7 +66,7 @@ export const TeacherDashboard: React.FC = () => {
       setClassrooms(classroomsRes.data.data);
       setMetrics(overviewRes.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load dashboard data');
+      console.error('Failed to load dashboard data:', err);
     } finally {
       setLoading(false);
     }
@@ -87,7 +85,6 @@ export const TeacherDashboard: React.FC = () => {
         description,
       });
       setCreateModalOpen(false);
-      // Reset form
       setSubjectName('');
       setSubjectCode('');
       fetchDashboardData();
@@ -123,7 +120,7 @@ export const TeacherDashboard: React.FC = () => {
       },
       (err) => {
         console.warn('GPS error:', err);
-        // Fallback demo location (classroom hall) if browser denies permission in testing
+        // Default standard campus coordinates if browser blocks location during testing
         setTeacherGps({
           latitude: 12.9716,
           longitude: 77.5946,
@@ -169,40 +166,40 @@ export const TeacherDashboard: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
             Teacher Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Manage your courses, initiate geofenced sessions, and audit verified attendance.
+            Manage your courses, initiate location-verified attendance sessions, and download reports.
           </p>
         </div>
 
         <button
           onClick={() => setCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Create Classroom</span>
         </button>
       </div>
 
-      {/* Active Session Callout Banner */}
+      {/* Active Session Alert Banner */}
       {metrics?.activeSession && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-500/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-600 text-white shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/20 rounded-xl live-pulse">
-              <Radio className="w-6 h-6 text-white" />
+            <div className="p-2.5 bg-white/20 rounded-xl">
+              <Radio className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-white/20">
-                  Live Attendance Active
+                <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/20">
+                  Session Active
                 </span>
-                <span className="text-xs text-white/80">
+                <span className="text-xs text-white/90">
                   Radius: {metrics.activeSession.allowedRadiusMeters || 25}m
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg font-bold mt-0.5">
+              <h3 className="text-base font-bold mt-0.5">
                 {metrics.activeSession.subjectName} ({metrics.activeSession.subjectCode})
               </h3>
             </div>
@@ -210,41 +207,41 @@ export const TeacherDashboard: React.FC = () => {
 
           <Link
             to={`/teacher/session/${metrics.activeSession.id}`}
-            className="px-5 py-2.5 bg-white text-emerald-800 hover:bg-emerald-50 text-xs sm:text-sm font-bold rounded-xl shadow transition flex items-center gap-2 self-stretch sm:self-auto justify-center"
+            className="px-4 py-2 bg-white text-emerald-800 hover:bg-emerald-50 text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 self-stretch sm:self-auto justify-center"
           >
-            <span>Open Live Attendance Monitor</span>
+            <span>Open Live Monitor</span>
             <Play className="w-3.5 h-3.5 fill-current" />
           </Link>
         </div>
       )}
 
-      {/* Stat Cards Overview */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
           title="Total Classrooms"
           value={metrics?.totalClassrooms || classrooms.length}
-          subtitle="Active subjects"
+          subtitle="Assigned courses"
           icon={BookOpen}
           color="blue"
         />
         <StatCard
           title="Total Students"
           value={metrics?.totalStudents || 0}
-          subtitle="Enrolled learners"
+          subtitle="Enrolled students"
           icon={Users}
           color="purple"
         />
         <StatCard
-          title="Classes Conducted"
+          title="Sessions Held"
           value={metrics?.totalSessionsConducted || 0}
-          subtitle="Total sessions held"
+          subtitle="Completed sessions"
           icon={CalendarCheck}
           color="emerald"
         />
         <StatCard
           title="Today's Attendance"
           value={metrics?.todayPresentCount || 0}
-          subtitle="Verified check-ins today"
+          subtitle="Check-ins today"
           icon={Check}
           color="amber"
         />
@@ -265,15 +262,15 @@ export const TeacherDashboard: React.FC = () => {
             <p className="text-xs">Loading classrooms...</p>
           </div>
         ) : classrooms.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-3xl border border-dashed border-slate-200 p-8 space-y-3">
-            <BookOpen className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="font-bold text-slate-800">No classrooms created yet</h3>
+          <div className="py-16 text-center bg-white rounded-2xl border border-dashed border-slate-200 p-8 space-y-3">
+            <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
+            <h3 className="font-semibold text-slate-800 text-sm">No classrooms yet</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Create your first classroom to generate a join code, share QR codes with students, and start taking verified attendance.
+              Create your classroom to generate a student joining code and take attendance.
             </p>
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="mt-2 px-5 py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl shadow transition"
+              className="mt-2 px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-xl shadow-sm transition"
             >
               Create Classroom
             </button>
@@ -283,12 +280,12 @@ export const TeacherDashboard: React.FC = () => {
             {classrooms.map((c) => (
               <div
                 key={c._id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden"
               >
-                <div className="p-6 space-y-3">
+                <div className="p-5 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                         {c.subjectCode}
                       </span>
                       <h3 className="text-base font-bold text-slate-900 mt-1 line-clamp-1">
@@ -297,8 +294,7 @@ export const TeacherDashboard: React.FC = () => {
                     </div>
 
                     {c.hasActiveSession && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 animate-pulse">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         ACTIVE
                       </span>
                     )}
@@ -330,7 +326,7 @@ export const TeacherDashboard: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleCopyLink(c.joinCode)}
-                        title="Copy Classroom Join Link"
+                        title="Copy Join Link"
                         className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-200/60 rounded-lg transition"
                       >
                         {copiedCode === c.joinCode ? (
@@ -351,18 +347,18 @@ export const TeacherDashboard: React.FC = () => {
                 </div>
 
                 {/* Card Action Footer */}
-                <div className="px-6 py-3 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
                   <Link
                     to={`/teacher/classroom/${c._id}`}
-                    className="text-xs font-bold text-slate-700 hover:text-blue-600 transition"
+                    className="text-xs font-semibold text-slate-700 hover:text-blue-600 transition"
                   >
-                    View Details & PDF →
+                    View Details & Reports →
                   </Link>
 
                   {c.hasActiveSession ? (
                     <Link
                       to={`/teacher/session/${c.activeSessionId}`}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1"
                     >
                       <Radio className="w-3.5 h-3.5" />
                       <span>Live Monitor</span>
@@ -370,7 +366,7 @@ export const TeacherDashboard: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => openStartSessionModal(c)}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm shadow-blue-500/20 transition flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" />
                       <span>Start Attendance</span>
@@ -393,7 +389,7 @@ export const TeacherDashboard: React.FC = () => {
         <form onSubmit={handleCreateClassroom} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Subject Name
               </label>
               <input
@@ -406,7 +402,7 @@ export const TeacherDashboard: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Subject Code
               </label>
               <input
@@ -422,7 +418,7 @@ export const TeacherDashboard: React.FC = () => {
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Section
               </label>
               <input
@@ -430,13 +426,13 @@ export const TeacherDashboard: React.FC = () => {
                 required
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
-                placeholder="e.g. Section A"
+                placeholder="Section A"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Semester
               </label>
               <select
@@ -446,14 +442,14 @@ export const TeacherDashboard: React.FC = () => {
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
                   <option key={s} value={s}>
-                    Sem {s}
+                    Semester {s}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Academic Year
               </label>
               <input
@@ -468,14 +464,14 @@ export const TeacherDashboard: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
               Description (Optional)
             </label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief course objectives or classroom location..."
+              placeholder="Brief course objectives or room details..."
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             />
           </div>
@@ -484,14 +480,14 @@ export const TeacherDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setCreateModalOpen(false)}
-              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={formSubmitting}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-sm transition"
             >
               {formSubmitting ? 'Creating...' : 'Create Classroom'}
             </button>
@@ -499,62 +495,65 @@ export const TeacherDashboard: React.FC = () => {
         </form>
       </Modal>
 
-      {/* START ATTENDANCE SESSION MODAL */}
+      {/* START ATTENDANCE SESSION MODAL WITH INTERACTIVE MAP */}
       <Modal
         isOpen={startSessionModalOpen}
         onClose={() => setStartSessionModalOpen(false)}
-        title={`Start Attendance - ${selectedClassroomForSession?.subjectName}`}
-        maxWidth="md"
+        title={`Start Attendance: ${selectedClassroomForSession?.subjectName}`}
+        maxWidth="lg"
       >
         <div className="space-y-4">
           <p className="text-xs text-slate-500">
-            SmartAttend will lock the authorized attendance geofence to your current GPS position.
-            Students must be within <strong>{radiusMeters} meters</strong> and pass biometric verification.
+            Attendance will be geofenced to your current classroom coordinates. Students must be within{' '}
+            <strong>{radiusMeters} meters</strong> to mark attendance.
           </p>
 
-          {/* GPS Coordinates Box */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                Teacher Location
-              </span>
-              <button
-                type="button"
-                onClick={getTeacherCurrentLocation}
-                className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1"
-              >
-                <RefreshCw className={`w-3 h-3 ${gpsLoading ? 'animate-spin' : ''}`} />
-                <span>Refresh GPS</span>
-              </button>
+          {/* Interactive Map Preview */}
+          {teacherGps && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                Geofence Map Preview
+              </label>
+              <LocationMap
+                centerLat={teacherGps.latitude}
+                centerLng={teacherGps.longitude}
+                radiusMeters={radiusMeters}
+                className="h-56 w-full rounded-xl"
+                centerLabel={selectedClassroomForSession?.subjectName || 'Classroom'}
+              />
             </div>
+          )}
 
+          {/* Location details */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex items-center justify-between">
             {gpsLoading ? (
-              <p className="text-xs text-slate-400 animate-pulse">Acquiring high-accuracy satellite fix...</p>
+              <span className="text-slate-400">Acquiring current GPS position...</span>
             ) : teacherGps ? (
-              <div className="text-xs text-slate-600 space-y-0.5">
-                <p>
-                  Latitude: <strong>{teacherGps.latitude.toFixed(6)}°</strong>
-                </p>
-                <p>
-                  Longitude: <strong>{teacherGps.longitude.toFixed(6)}°</strong>
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  Estimated Accuracy: ±{teacherGps.accuracy}m
-                </p>
+              <div>
+                <span>Coordinates: <strong>{teacherGps.latitude.toFixed(6)}°, {teacherGps.longitude.toFixed(6)}°</strong></span>
+                <span className="text-slate-400 ml-2">(±{teacherGps.accuracy}m accuracy)</span>
               </div>
             ) : (
-              <p className="text-xs text-amber-600">Location not captured. Click Refresh GPS.</p>
+              <span className="text-amber-600">Location not acquired.</span>
             )}
+
+            <button
+              type="button"
+              onClick={getTeacherCurrentLocation}
+              className="text-blue-600 font-semibold hover:underline flex items-center gap-1"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${gpsLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
           </div>
 
-          {/* Allowed Radius Setting */}
+          {/* Radius selector */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 Geofence Radius
               </label>
-              <span className="text-xs font-black text-blue-600">{radiusMeters} meters</span>
+              <span className="text-xs font-bold text-blue-600">{radiusMeters} meters</span>
             </div>
             <input
               type="range"
@@ -566,9 +565,9 @@ export const TeacherDashboard: React.FC = () => {
               className="w-full accent-blue-600"
             />
             <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-              <span>10m (Tight Room)</span>
-              <span>25m (Standard Classroom)</span>
-              <span>50m (Lecture Hall)</span>
+              <span>10m</span>
+              <span>25m (Default)</span>
+              <span>50m</span>
             </div>
           </div>
 
@@ -576,7 +575,7 @@ export const TeacherDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setStartSessionModalOpen(false)}
-              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
             >
               Cancel
             </button>
@@ -584,7 +583,7 @@ export const TeacherDashboard: React.FC = () => {
               type="button"
               onClick={handleStartSession}
               disabled={sessionSubmitting || !teacherGps}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               <span>{sessionSubmitting ? 'Starting...' : 'Activate Session'}</span>
@@ -605,4 +604,3 @@ export const TeacherDashboard: React.FC = () => {
     </div>
   );
 };
-

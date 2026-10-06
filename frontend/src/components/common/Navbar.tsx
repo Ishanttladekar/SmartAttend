@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, LogOut, User as UserIcon, BookOpen, Clock, Shield } from 'lucide-react';
+import { ShieldCheck, LogOut, BookOpen, Clock, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 
 export const Navbar: React.FC = () => {
@@ -13,20 +13,20 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
-          <Link to="/" className="flex items-center space-x-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-6 h-6" />
+          <Link to="/" className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+              <span className="font-bold text-lg text-slate-900 tracking-tight">
                 Smart<span className="text-blue-600">Attend</span>
               </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                Anti-Proxy
+              <span className="hidden sm:inline-block ml-2 text-xs text-slate-400 font-medium">
+                Attendance Portal
               </span>
             </div>
           </Link>
@@ -51,7 +51,7 @@ export const Navbar: React.FC = () => {
                       className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-1.5"
                     >
                       <BookOpen className="w-4 h-4 text-slate-500" />
-                      Subjects
+                      Courses
                     </Link>
                     <Link
                       to="/student/history"
@@ -70,12 +70,12 @@ export const Navbar: React.FC = () => {
                   </nav>
                 )}
 
-                {/* Role Pill */}
+                {/* Role Badge */}
                 <span
-                  className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${
                     user.role === 'teacher'
-                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                   }`}
                 >
                   {user.role}
@@ -100,13 +100,13 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-500/20 transition"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition"
                 >
                   Register
                 </Link>
@@ -118,4 +118,3 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
-
